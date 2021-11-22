@@ -1,1 +1,1 @@
-exclude src/dnmf-python/test.py
+exclude src/dnmf/test.py

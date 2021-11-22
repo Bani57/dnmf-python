@@ -29,7 +29,7 @@ with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining
 
 - To run the algorithm, load the graph adjacency matrix into a `torch.FloatTensor` (for ex. `A`), then call:
     ```
-    from dnmf-python import DNMF
+    from dnmf import DNMF
     dnmf = DNMF()
     F = dnmf(A)
     ```
