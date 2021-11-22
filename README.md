@@ -33,7 +33,7 @@ with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining
     dnmf = DNMF()
     F = dnmf(A)
     ```
-- To run a quick test of the algorithm with an example graph, run `python src/test.py`
+- To run a quick test of the algorithm with an example graph, run `python test.py` from inside the `src/dnmf/` directory
 
 -----------
 
