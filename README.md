@@ -22,6 +22,11 @@ with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining
 
 ## Quick start
 
+- To install the package run one of the two commands:
+  - `python -m pip install dnmf-python` (installation from PyPI)
+  - `python setup.py install` (compile from source, if cloned the repository)
+  
+
 - To run the algorithm, load the graph adjacency matrix into a `torch.FloatTensor` (for ex. `A`), then call:
     ```
     from dnmf-python import DNMF
