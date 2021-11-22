@@ -11,16 +11,16 @@ Ye, Fanghua, Chuan Chen, Zibin Zheng, Rong-Hua Li, and Jeffrey Xu Yu. 2019. “D
 with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining (ICDM),
 708–17. https://doi.org/10.1109/ICDM.2019.00081.
 
-## Requirements
-
 -----------
+
+## Requirements
 
 - `python>=3.7.1`
 - `torch>=1.9.1`
 
-## Quick start
-
 -----------
+
+## Quick start
 
 - To run the algorithm, load the graph adjacency matrix into a `torch.FloatTensor` (for ex. `A`), then call:
     ```
@@ -30,9 +30,9 @@ with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining
     ```
 - To run a quick test of the algorithm with an example graph, run `python src/test.py`
 
-## Config
-
 -----------
+
+## Config
 
 The DNMF module supports the following hyperparameters as arguments:
 
@@ -43,9 +43,9 @@ The DNMF module supports the following hyperparameters as arguments:
 - `num_outer_iter`: number of iterations for the outer loop (SDP iterations)
 - `num_inner_iter`: number of iterations for the inner loops (U and F subproblems)
 
-## Author
-
 -----------
+
+## Author
 
 Andrej Janchevski
 
