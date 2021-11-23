@@ -1,4 +1,4 @@
-# DNMF
+# dnmf-python
 
 Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community
 detection algorithm
@@ -10,6 +10,8 @@ detection algorithm
 Ye, Fanghua, Chuan Chen, Zibin Zheng, Rong-Hua Li, and Jeffrey Xu Yu. 2019. “Discrete Overlapping Community Detection
 with Pseudo Supervision.” In 2019 IEEE International Conference on Data Mining (ICDM),
 708–17. https://doi.org/10.1109/ICDM.2019.00081.
+
+Official implementation in MATLAB at https://github.com/smartyfh/DNMF.
 
 -----------
 
@@ -50,6 +52,22 @@ The DNMF module supports the following hyperparameters as arguments:
 
 -----------
 
+## How to cite
+
+If you used `dnmf-python` for work on your paper please use the following BibTeX entry to cite this software:
+
+```
+@misc{janchevski_dnmf_2021,
+  title        = "dnmf-python",
+  author       = "{Janchevski, Andrej}",
+  howpublished = "\url{https://github.com/Bani57/dnmf-python}",
+  year         = 2021,
+  note         = "Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community detection algorithm"
+}
+```
+
+------------
+
 ## Author
 
 Andrej Janchevski
@@ -57,3 +75,5 @@ Andrej Janchevski
 andrej.janchevski@epfl.ch
 
 EPFL STI IEM LIONS
+
+Lausanne, Switzerland
