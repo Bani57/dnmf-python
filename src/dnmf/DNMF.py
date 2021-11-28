@@ -25,7 +25,32 @@ class DNMF(nn.Module):
         self.k = k
         self.num_outer_iter = num_outer_iter
         self.num_inner_iter = num_inner_iter
+
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.epsilon_conv = 1e-6
+        self.epsilon_denom = 1e-15
+
+    def __reset(self, A: torch.Tensor):
+        """
+        Initialize the algorithm variables
+
+        :param A: adjacency matrix of a graph, torch.Tensor
+        """
+
+        self.__N = A.size(0)
+        I = torch.eye(self.__N, device=self.device)
+
+        H = I - (1 / self.__N)
+        K = torch.exp(-0.5 * torch.sum((A.unsqueeze(2) - A) ** 2, 1))
+        K_hat = H.T @ K @ H
+        self.__S = H - torch.linalg.inv(K_hat + self.gamma * I) @ K_hat
+        self.__S_prime = self.beta * self.__S + self.alpha * I
+        self.__row_k_ones = torch.ones(1, self.k, device=self.device)
+        self.__exclusion_masks = (1 - I).bool()
+
+        self.__U = torch.rand(self.__N, self.k, device=self.device)
+        self.__F = torch.rand(self.__N, self.k, device=self.device)
+        self.__Q = self.__ProjTF(torch.rand(self.k, self.k, device=self.device))
 
     def __ProjTF(self, A: torch.Tensor) -> torch.Tensor:
         """
@@ -39,118 +64,87 @@ class DNMF(nn.Module):
         U, S, V = torch.linalg.svd(A)
         return U @ torch.eye(len(S), device=self.device) @ V.T
 
-    def __loss_u(self, A: torch.Tensor, F: torch.Tensor, U: torch.Tensor, Q: torch.Tensor) -> float:
+    def __loss_u(self, A: torch.Tensor) -> float:
         """
         Calculate the loss for the U-subproblem: ||A - UU^T||^2_F + alpha ||U - FQ||^2_F
 
         :param A: adjacency matrix of a graph, torch.Tensor
-        :param F: discrete community membership matrix, torch.Tensor
-        :param U: continuous community membership matrix, torch.Tensor
-        :param Q: rotation matrix, torch.Tensor
 
         :return: loss value, float
         """
 
-        return torch.linalg.norm(A - U @ U.T) ** 2 + self.alpha * torch.linalg.norm(U - F @ Q) ** 2
+        return torch.linalg.norm(A - self.__U @ self.__U.T) ** 2 \
+               + self.alpha * torch.linalg.norm(self.__U - self.__F @ self.__Q) ** 2
 
-    def __update_u(self, A: torch.Tensor, F: torch.Tensor, U: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
+    def __update_u(self, A: torch.Tensor):
         """
         Solve the U optimization problem
 
         :param A: adjacency matrix of a graph, torch.Tensor
-        :param F: discrete community membership matrix, torch.Tensor
-        :param U: continuous community membership matrix, torch.Tensor
-        :param Q: rotation matrix, torch.Tensor
-
-        :return: U, updated continuous community membership matrix, torch.Tensor
         """
 
-        iter = 0
+        step = 0
         converged = False
-        epsilon_conv = 1e-6
-        epsilon_denom = torch.tensor(1e-15, device=self.device)
 
-        Q_plus = (torch.abs(Q) + Q) / 2
-        Q_minus = (torch.abs(Q) - Q) / 2
-        prev_loss_u = self.__loss_u(A, F, U, Q)
+        Q_plus = (torch.abs(self.__Q) + self.__Q) / 2
+        Q_minus = (torch.abs(self.__Q) - self.__Q) / 2
+        prev_loss_u = self.__loss_u(A)
 
-        while iter < 10 * self.num_inner_iter and not converged:
-            numerator = 2 * A @ U + self.alpha * F @ Q_plus
-            denominator = torch.maximum(2 * U @ U.T @ U + self.alpha * U + self.alpha * F @ Q_minus, epsilon_denom)
-            U = U * (numerator / denominator) ** 0.25
+        while step < 10 * self.num_inner_iter and not converged:
+            numerator = 2 * A @ self.__U + self.alpha * self.__F @ Q_plus
+            denominator = torch.clamp(2 * self.__U @ self.__U.T @ self.__U
+                                      + self.alpha * self.__U + self.alpha * self.__F @ Q_minus,
+                                      min=self.epsilon_denom, max=None)
+            self.__U = self.__U * (numerator / denominator) ** 0.25
 
-            iter += 1
-            cur_loss_u = self.__loss_u(A, F, U, Q)
-            if abs(cur_loss_u - prev_loss_u) < epsilon_conv:
+            step += 1
+            cur_loss_u = self.__loss_u(A)
+            if abs(cur_loss_u - prev_loss_u) < self.epsilon_conv:
                 converged = True
             prev_loss_u = cur_loss_u
 
-        return U
-
-    def __loss_f(self, F: torch.Tensor, U: torch.Tensor, S: torch.Tensor, Q: torch.Tensor) -> float:
+    def __loss_f(self) -> float:
         """
         Calculate the loss for the F-subproblem: alpha ||U - FQ||^2_F + beta Tr(F^TSF)
-
-        :param F: discrete community membership matrix, torch.Tensor
-        :param U: continuous community membership matrix, torch.Tensor
-        :param S: discrimination matrix, torch.Tensor
-        :param Q: rotation matrix, torch.Tensor
 
         :return: loss value, float
         """
 
-        return self.alpha * torch.linalg.norm(U - F @ Q) ** 2 + self.beta * torch.trace(F.T @ S @ F)
+        return self.alpha * torch.linalg.norm(self.__U - self.__F @ self.__Q) ** 2 \
+               + self.beta * torch.trace(self.__F.T @ self.__S @ self.__F)
 
-    def __update_f(self, F: torch.Tensor, U: torch.Tensor, S: torch.Tensor, Q: torch.Tensor) -> torch.Tensor:
+    def __update_f(self):
         """
         Solve the F optimization problem
-
-        :param F: discrete community membership matrix, torch.Tensor
-        :param U: continuous community membership matrix, torch.Tensor
-        :param S: discrimination matrix, torch.Tensor
-        :param Q: rotation matrix, torch.Tensor
-
-        :return: updated discrete community membership matrix, torch.Tensor
         """
 
-        iter = 0
+        step = 0
         converged = False
-        epsilon = 1e-6
 
-        N, K = F.size()
-        I = torch.eye(N, device=self.device)
-        row_k_ones = torch.ones(1, K, device=self.device)
-        UQ = U @ Q.T
-        S_prime = self.beta * S + self.alpha * I
-        S_exclusion_masks = (1 - I).bool()
-        prev_loss_f = self.__loss_f(F, U, S, Q)
+        UQ = self.__U @ self.__Q.T
 
-        while iter < self.num_inner_iter and not converged:
-            for i in range(N):
-                e = S_prime[i, i] * row_k_ones \
-                    + 2 * (S_prime[i, S_exclusion_masks[i]] @ F[S_exclusion_masks[i]] - self.alpha * UQ[i])
-                F[i] = ((e == torch.min(e)) | (e < 0)).long()
+        prev_loss_f = self.__loss_f()
 
-            iter += 1
-            cur_loss_f = self.__loss_f(F, U, S, Q)
-            if abs(cur_loss_f - prev_loss_f) < epsilon:
+        while step < self.num_inner_iter and not converged:
+            for i in range(self.__N):
+                e = self.__S_prime[i, i] * self.__row_k_ones \
+                    + 2 * (self.__S_prime[i, self.__exclusion_masks[i]] @ self.__F[self.__exclusion_masks[i]]
+                           - self.alpha * UQ[i])
+                self.__F[i] = ((e == torch.min(e)) | (e < 0)).long()
+
+            step += 1
+            cur_loss_f = self.__loss_f()
+            if abs(cur_loss_f - prev_loss_f) < self.epsilon_conv:
                 converged = True
             prev_loss_f = cur_loss_f
 
-        return F
-
-    def __update_q(self, U: torch.Tensor, F: torch.Tensor) -> torch.Tensor:
+    def __update_q(self):
         """
         Solve the Q optimization problem: alpha ||U - FQ||^2_F, s.t. QQ^T = I
-
-        :param U: continuous community membership matrix, torch.Tensor
-        :param F: discrete community membership matrix, torch.Tensor
-
-        :return: updated rotation matrix, torch.Tensor
         """
 
-        left_sv, _, right_sv = torch.linalg.svd(U.T @ F)
-        return right_sv @ left_sv.T
+        left_sv, _, right_sv = torch.linalg.svd(self.__U.T @ self.__F)
+        self.__Q = right_sv @ left_sv.T
 
     def forward(self, A: torch.Tensor, verbose: bool = False) -> torch.Tensor:
         """
@@ -163,24 +157,14 @@ class DNMF(nn.Module):
         """
 
         A = A.to(self.device)
-        n = A.size(0)
-        I = torch.eye(n, device=self.device)
+        self.__reset(A)
 
-        H = I - (1 / n)
-        K = torch.exp(-0.5 * torch.sum((A.unsqueeze(2) - A) ** 2, 1))
-        K_hat = H.T @ K @ H
-        S = H - torch.linalg.inv(K_hat + self.gamma * I) @ K_hat
-
-        U = torch.rand(n, self.k, device=self.device)
-        F = torch.rand(n, self.k, device=self.device)
-        Q = self.__ProjTF(torch.rand(self.k, self.k, device=self.device))
-
-        iter = 0
-        while iter <= self.num_outer_iter:
-            U = self.__update_u(A, F, U, Q)
+        step = 0
+        while step <= self.num_outer_iter:
+            self.__update_u(A)
             if verbose:
-                print(f"finish U in round {iter + 1}")
-            F = self.__update_f(F, U, S, Q)
-            Q = self.__update_q(U, F)
-            iter += 1
-        return F
+                print(f"finish U in round {step + 1}")
+            self.__update_f()
+            self.__update_q()
+            step += 1
+        return self.__F
