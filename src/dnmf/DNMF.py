@@ -1,4 +1,5 @@
 """ Script containing the algorithm implementation """
+from typing import Union
 
 import torch
 from torch import nn
@@ -6,7 +7,8 @@ from torch import nn
 
 class DNMF(nn.Module):
     def __init__(self, alpha: float = 0.5, beta: float = 0.1, gamma: float = 0.1,
-                 k: int = 5, num_outer_iter: int = 50, num_inner_iter: int = 500):
+                 k: int = 5, num_outer_iter: int = 50, num_inner_iter: int = 500,
+                 device: Union[str, torch.device] = "cpu"):
         """
         Implements https://doi.org/10.1109/ICDM.2019.00081
 
@@ -16,6 +18,7 @@ class DNMF(nn.Module):
         :param k: desired number of communities, int
         :param num_outer_iter: number of outer iterations, int
         :param num_inner_iter: number of inner iterations, int
+        :param device: hardware device on which to perform computations, str or torch.device
         """
 
         super().__init__()
@@ -25,8 +28,8 @@ class DNMF(nn.Module):
         self.k = k
         self.num_outer_iter = num_outer_iter
         self.num_inner_iter = num_inner_iter
+        self.device = device
 
-        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         self.epsilon_conv = 1e-6
         self.epsilon_denom = 1e-15
 
