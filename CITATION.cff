@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you used dnmf-python for work on your paper please use the following citation to cite this software."
+authors:
+- family-names: "Janchevski"
+  given-names: "Andrej"
+  orcid: "https://orcid.org/0000-0001-9568-0966"
+title: "Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community detection algorithm"
+version: 0.0.3
+doi: 10.5281/zenodo.13881412
+date-released: 2022-01-12
+url: "https://github.com/Bani57/dnmf-python"
