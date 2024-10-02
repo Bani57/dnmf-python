@@ -1,7 +1,9 @@
-# dnmf-python
+# dnmf-python 
 
 Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community
 detection algorithm
+
+[![DOI](https://zenodo.org/badge/430866392.svg)](https://doi.org/10.5281/zenodo.13881412)
 
 ------------
 
@@ -57,12 +59,14 @@ The DNMF module supports the following hyperparameters as arguments:
 If you used `dnmf-python` for work on your paper please use the following BibTeX entry to cite this software:
 
 ```
-@misc{janchevski_dnmf_2021,
-  title        = "dnmf-python",
-  author       = "{Janchevski, Andrej}",
-  howpublished = "\url{https://github.com/Bani57/dnmf-python}",
-  year         = 2021,
-  note         = "Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community detection algorithm"
+@software{janchevski_dnmf-python_2022,
+author = {Janchevski, Andrej},
+doi = {10.5281/zenodo.13881412},
+month = jan,
+title = {{dnmf-python: Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community detection algorithm}},
+url = {https://github.com/Bani57/dnmf-python},
+version = {0.0.3},
+year = {2022}
 }
 ```
 
