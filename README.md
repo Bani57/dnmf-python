@@ -3,7 +3,7 @@
 Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community
 detection algorithm
 
-[![DOI](https://zenodo.org/badge/430866392.svg)](https://doi.org/10.5281/zenodo.13881412)
+[![DOI](https://zenodo.org/badge/430866392.svg)](https://doi.org/10.5281/zenodo.13881411)
 
 ------------
 
