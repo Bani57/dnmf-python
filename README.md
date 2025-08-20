@@ -61,7 +61,7 @@ If you used `dnmf-python` for work on your paper please use the following BibTeX
 ```
 @software{janchevski_dnmf-python_2022,
 author = {Janchevski, Andrej},
-doi = {10.5281/zenodo.13881412},
+doi = {10.5281/zenodo.13881411},
 month = jan,
 title = {{dnmf-python: Unofficial Python implementation of the Discrete Non-negative Matrix Factorization (DNMF) overlapping community detection algorithm}},
 url = {https://github.com/Bani57/dnmf-python},
